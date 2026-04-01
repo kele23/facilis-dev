@@ -2,17 +2,16 @@
     <div class="hero bg-base-200 min-h-screen">
         <div class="hero-content flex-col lg:flex-row-reverse">
             <div class="text-center lg:text-left">
-                <h1 class="text-5xl font-bold">facilis.dev</h1>
+                <h1 class="text-5xl font-bold">{{ t('login.title') }}</h1>
                 <p class="py-6">
-                    Access the Vibe Coding Studio. Sign in to continue to your
-                    projects.
+                    {{ t('login.subtitle') }}
                 </p>
             </div>
             <div class="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
                 <form class="card-body" @submit.prevent="handleLogin">
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text">Username</span>
+                            <span class="label-text">{{ t('login.username') }}</span>
                         </label>
                         <input
                             v-model="username"
@@ -24,12 +23,12 @@
                     </div>
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text">Password</span>
+                            <span class="label-text">{{ t('login.password') }}</span>
                         </label>
                         <input
                             v-model="password"
                             type="password"
-                            placeholder="password"
+                            :placeholder="t('login.password')"
                             class="input input-bordered"
                             required
                         />
@@ -47,7 +46,7 @@
                                 v-if="loading"
                                 class="loading loading-spinner"
                             ></span>
-                            Login
+                            {{ t('login.submit') }}
                         </button>
                     </div>
                 </form>
@@ -60,7 +59,9 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth.ts';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const router = useRouter();
 const auth = useAuthStore();
 
@@ -78,7 +79,7 @@ async function handleLogin() {
     if (success) {
         router.push('/');
     } else {
-        errorMsg.value = 'Invalid username or password';
+        errorMsg.value = t('login.invalidCredentials');
     }
 }
 </script>

@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref, watch, onUnmounted, computed } from 'vue';
 import { useDB } from '../composable/useDB.ts';
+import { useI18n } from 'vue-i18n';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { VueMonacoEditor } from '@guolao/vue-monaco-editor';
 import VersionHistory from './VersionHistory.vue';
+
+const { t } = useI18n();
 
 const props = defineProps<{
     projectId: string;
@@ -54,8 +57,8 @@ const defaultIndex = `
         <div class="w-24 h-24 bg-indigo-600 rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-indigo-200">
             <span class="text-white font-bold text-4xl italic">f.</span>
         </div>
-        <h1 class="text-2xl font-bold text-gray-800">Ready to Prototype</h1>
-        <p class="text-gray-500 max-w-xs mx-auto">Start chatting with the AI to generate your application files.</p>
+        <h1 class="text-2xl font-bold text-gray-800">${t('sandbox.readyTitle')}</h1>
+        <p class="text-gray-500 max-w-xs mx-auto">${t('sandbox.readySubtitle')}</p>
     </div>
 </body>
 </html>`;
@@ -195,7 +198,7 @@ async function restoreCurrentPreview() {
 
     if (
         !confirm(
-            'Ripristinare questa versione sovrascriverà i file attuali e CANCELLERÀ tutti i messaggi E LE VERSIONI successivi per mantenere la coerenza lineare. Continuare?',
+            t('sandbox.restoreConfirm'),
         )
     )
         return;
@@ -282,7 +285,7 @@ async function restoreCurrentPreview() {
         handleRestored();
     } catch (e) {
         console.error('[HISTORY] Restore error', e);
-        alert('Errore durante il ripristino della versione.');
+        alert(t('sandbox.restoreError'));
     } finally {
         restoring.value = false;
     }
@@ -352,7 +355,7 @@ onUnmounted(() => {
                         "
                         @click="viewMode = 'code'"
                     >
-                        Codice
+                        {{ t('sandbox.code') }}
                     </button>
                     <button
                         class="btn btn-xs join-item rounded-lg border-none hover:bg-base-300"
@@ -363,7 +366,7 @@ onUnmounted(() => {
                         "
                         @click="viewMode = 'preview'"
                     >
-                        Anteprima
+                        {{ t('sandbox.preview') }}
                     </button>
                 </div>
             </div>
@@ -374,7 +377,7 @@ onUnmounted(() => {
                     v-if="viewMode === 'preview'"
                     class="btn btn-ghost btn-square btn-sm opacity-50 hover:opacity-100 transition-opacity"
                     @click="updateSandbox"
-                    title="Refresh Preview"
+                    :title="t('sandbox.refresh')"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -395,7 +398,7 @@ onUnmounted(() => {
                     class="btn btn-ghost btn-square btn-sm"
                     :class="{ 'text-primary bg-primary/10': showHistory }"
                     @click="showHistory = !showHistory"
-                    title="Cronologia Versioni"
+                    :title="t('versionHistory.title')"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -430,7 +433,7 @@ onUnmounted(() => {
                             d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
                         />
                     </svg>
-                    Export
+                    {{ t('sandbox.export') }}
                 </button>
             </div>
         </div>
@@ -503,10 +506,10 @@ onUnmounted(() => {
                             <span
                                 class="loading loading-spinner loading-xs"
                             ></span>
-                            Ripristino in corso...
+                            {{ t('sandbox.restoring') }}
                         </span>
                         <span v-else
-                            >ANTEPRIMA VERSIONE:
+                            >{{ t('sandbox.previewBanner') }}
                             {{ previewSnapshot.title }}</span
                         >
                     </div>
@@ -516,14 +519,14 @@ onUnmounted(() => {
                             :disabled="restoring"
                             class="btn btn-xs bg-white text-primary border-none hover:bg-white/90 rounded-lg font-bold"
                         >
-                            Ripristina questa versione
+                            {{ t('sandbox.restoreButton') }}
                         </button>
                         <button
                             @click="exitPreview"
                             :disabled="restoring"
                             class="btn btn-xs btn-ghost hover:bg-white/10 text-white rounded-lg"
                         >
-                            Esci
+                            {{ t('sandbox.exit') }}
                         </button>
                     </div>
                 </div>
@@ -540,7 +543,7 @@ onUnmounted(() => {
                                 : 'opacity-40 hover:opacity-100'
                         "
                         @click="previewSize = 'mobile'"
-                        title="Mobile"
+                        :title="t('sandbox.viewMobile')"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -565,7 +568,7 @@ onUnmounted(() => {
                                 : 'opacity-40 hover:opacity-100'
                         "
                         @click="previewSize = 'tablet'"
-                        title="Tablet"
+                        :title="t('sandbox.viewTablet')"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -590,7 +593,7 @@ onUnmounted(() => {
                                 : 'opacity-40 hover:opacity-100'
                         "
                         @click="previewSize = 'desktop'"
-                        title="Monitor"
+                        :title="t('sandbox.viewDesktop')"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -631,7 +634,7 @@ onUnmounted(() => {
                             class="loading loading-ring loading-lg text-primary/30"
                         ></span>
                         <span class="font-medium animate-pulse text-sm"
-                            >Rendering sandbox...</span
+                            >{{ t('sandbox.rendering') }}</span
                         >
                     </div>
                 </div>

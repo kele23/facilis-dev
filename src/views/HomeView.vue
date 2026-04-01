@@ -1,10 +1,10 @@
 <template>
     <div class="h-full bg-base-200 p-8 flex flex-col gap-6 overflow-auto">
         <div class="flex justify-between items-center w-full max-w-5xl mx-auto">
-            <h1 class="text-3xl font-bold">Your Projects</h1>
+            <h1 class="text-3xl font-bold">{{ t('home.title') }}</h1>
             <div class="flex items-center gap-4">
                 <span class="text-sm opacity-70"
-                    >Logged in as: <strong>{{ auth.user?.name }}</strong></span
+                    >{{ t('home.loggedInAs', { name: auth.user?.name }) }}</span
                 >
                 <button
                     class="btn btn-outline btn-sm btn-ghost"
@@ -29,10 +29,10 @@
                             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                         />
                     </svg>
-                    Settings
+                    {{ t('common.settings') }}
                 </button>
                 <button class="btn btn-outline btn-sm" @click="handleLogout">
-                    Logout
+                    {{ t('common.logout') }}
                 </button>
             </div>
         </div>
@@ -40,12 +40,12 @@
         <!-- Create project Form -->
         <div class="card bg-base-100 shadow-sm max-w-5xl mx-auto w-full">
             <div class="card-body">
-                <h2 class="card-title text-xl">Create New Project</h2>
+                <h2 class="card-title text-xl">{{ t('home.createNewProject') }}</h2>
                 <div class="flex flex-col sm:flex-row gap-4 mt-2">
                     <input
                         v-model="newProjectId"
                         type="text"
-                        placeholder="Unique Project ID (e.g. my-awesome-app)"
+                        :placeholder="t('home.projectIdPlaceholder')"
                         class="input input-bordered flex-1"
                         :disabled="creating"
                         @keyup.enter="createProject"
@@ -59,7 +59,7 @@
                             v-if="creating"
                             class="loading loading-spinner"
                         ></span>
-                        Create Project
+                        {{ t('home.createProject') }}
                     </button>
                 </div>
                 <div v-if="createError" class="text-error mt-2">
@@ -80,7 +80,7 @@
                 v-else-if="projects.length === 0"
                 class="text-center p-12 opacity-50"
             >
-                No projects found. Create one above!
+                {{ t('home.noProjectsFound') }}
             </div>
 
             <div
@@ -111,11 +111,11 @@
                                         : 'badge-secondary'
                                 "
                             >
-                                {{ project.role }}
+                                {{ project.role === 'Developer' ? t('home.roles.developer') : t('home.roles.viewer') }}
                             </div>
                         </div>
                         <p class="text-sm opacity-60">
-                            Created:
+                            {{ t('home.created') }}
                             {{
                                 new Date(project.createdAt).toLocaleDateString()
                             }}
@@ -125,7 +125,7 @@
                                 class="btn btn-ghost btn-sm"
                                 @click.stop="openProject(project.id)"
                             >
-                                Open Studio
+                                {{ t('home.openStudio') }}
                             </button>
                         </div>
                     </div>
@@ -141,24 +141,23 @@
         :class="{ 'modal-open': showSettingsModal }"
     >
         <div class="modal-box">
-            <h3 class="font-bold text-lg">Global Profile Settings</h3>
+            <h3 class="font-bold text-lg">{{ t('settings.globalProfile') }}</h3>
             <p class="py-4 text-sm text-base-content/70">
-                Configure your default AI provider and API key. This will be
-                automatically used for all new projects you create.
+                {{ t('settings.description') }}
                 <span
                     v-if="userSettings?.hasToken"
                     class="text-success font-bold block mt-2"
-                    >✓ API Token is currently configured</span
+                    >✓ {{ t('settings.apiTokenConfigured') }}</span
                 >
                 <span v-else class="text-warning font-bold block mt-2"
-                    >⚠ No Default API Token configured</span
+                    >⚠ {{ t('settings.noApiToken') }}</span
                 >
             </p>
 
             <form @submit.prevent="saveSettings" class="space-y-4">
                 <div class="form-control">
                     <label class="label"
-                        ><span class="label-text">Provider</span></label
+                        ><span class="label-text">{{ t('settings.provider') }}</span></label
                     >
                     <select
                         v-model="settingsForm.provider"
@@ -175,7 +174,7 @@
 
                 <div class="form-control">
                     <label class="label"
-                        ><span class="label-text">API Token</span></label
+                        ><span class="label-text">{{ t('settings.apiToken') }}</span></label
                     >
                     <input
                         v-model="settingsForm.token"
@@ -186,7 +185,7 @@
                     />
                     <label class="label" v-if="userSettings?.hasToken">
                         <span class="label-text-alt text-base-content/60"
-                            >Leave blank to keep existing token</span
+                            >{{ t('settings.leaveBlank') }}</span
                         >
                     </label>
                 </div>
@@ -198,7 +197,7 @@
                         @click="showSettingsModal = false"
                         :disabled="savingSettings"
                     >
-                        Cancel
+                        {{ t('common.cancel') }}
                     </button>
                     <button
                         type="submit"
@@ -209,7 +208,7 @@
                             v-if="savingSettings"
                             class="loading loading-spinner loading-sm"
                         ></span>
-                        Save
+                        {{ t('common.save') }}
                     </button>
                 </div>
             </form>
@@ -229,7 +228,9 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth.ts';
 import { apiFetch } from '../utils/apiFetch.ts';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const router = useRouter();
 const auth = useAuthStore();
 
@@ -285,7 +286,7 @@ async function saveSettings() {
         showSettingsModal.value = false;
         settingsForm.value.token = ''; // clear memory
     } catch (e) {
-        alert('Failed to save settings');
+        alert(t('settings.failedToSave'));
     } finally {
         savingSettings.value = false;
     }
@@ -324,10 +325,10 @@ async function createProject() {
             newProjectId.value = '';
             await fetchProjects();
         } else {
-            createError.value = data.message || 'Failed to create project';
+            createError.value = data.message || t('home.failedToCreateProject');
         }
     } catch (error) {
-        createError.value = 'Failed to create project';
+        createError.value = t('home.failedToCreateProject');
         console.error(error);
     } finally {
         creating.value = false;

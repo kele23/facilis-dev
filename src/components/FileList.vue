@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, watch, onUnmounted } from 'vue';
 import { useDB } from '../composable/useDB.ts';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const props = defineProps<{
     projectId: string;
@@ -39,7 +42,7 @@ function setupChangesListener() {
 }
 
 async function deleteFile(id: string) {
-    if (!filesDB.value || !confirm(`Delete ${id}?`)) return;
+    if (!filesDB.value || !confirm(t('fileList.deleteConfirm', { id }))) return;
     try {
         const doc = await filesDB.value.get(id);
         await filesDB.value.remove(doc);
@@ -68,7 +71,7 @@ onUnmounted(() => {
         <div
             class="px-4 py-2 bg-base-200 text-xs font-bold uppercase tracking-wider flex justify-between items-center"
         >
-            <span>Project Files</span>
+            <span>{{ t('fileList.title') }}</span>
             <span class="badge badge-xs badge-ghost">{{ files.length }}</span>
         </div>
         <div class="overflow-y-auto flex-1 p-2">
@@ -76,7 +79,7 @@ onUnmounted(() => {
                 v-if="files.length === 0"
                 class="text-center py-4 text-xs opacity-50 italic"
             >
-                No files generated yet.
+                {{ t('fileList.noFiles') }}
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                 <div

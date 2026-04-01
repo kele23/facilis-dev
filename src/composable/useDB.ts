@@ -47,6 +47,13 @@ watch(
         chatReady.value = false;
         filesReady.value = false;
 
+        // If offline, we proceed with local data immediately
+        if (!online) {
+            chatReady.value = true;
+            filesReady.value = true;
+            return;
+        }
+
         if (isLogged && online && project) {
             const fetchOpts = {
                 fetch: async (url: any, opts: any) => {
@@ -74,7 +81,14 @@ watch(
                         retry: true,
                     })
                     .on('paused', () => {
+                        console.log('[DB] Chat sync caught up.');
                         chatReady.value = true;
+                    })
+                    .on('error', (err: any) => {
+                        console.warn('[DB] Chat sync error (probably 404 on new project):', err);
+                    })
+                    .on('denied', (err: any) => {
+                        console.error('[DB] Chat sync denied:', err);
                     });
             }
 
@@ -89,7 +103,14 @@ watch(
                         retry: true,
                     })
                     .on('paused', () => {
+                        console.log('[DB] Files sync caught up.');
                         filesReady.value = true;
+                    })
+                    .on('error', (err: any) => {
+                        console.warn('[DB] Files sync error (probably 404 on new project):', err);
+                    })
+                    .on('denied', (err: any) => {
+                        console.error('[DB] Files sync denied:', err);
                     });
             }
         }

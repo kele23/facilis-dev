@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useDB } from '../composable/useDB.ts';
+import { useI18n } from 'vue-i18n';
+
+const { t, locale } = useI18n();
 
 const props = defineProps<{
     projectId: string;
@@ -43,7 +46,7 @@ function selectVersion(ver: any, idx: number) {
 
 function formatDate(dateStr: string) {
     const date = new Date(dateStr);
-    return date.toLocaleString('it-IT', {
+    return date.toLocaleString(locale.value, {
         day: '2-digit',
         month: '2-digit',
         hour: '2-digit',
@@ -101,7 +104,7 @@ watch(filesDB, () => {
                         d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                 </svg>
-                <h3 class="font-bold text-sm">Cronologia Versioni</h3>
+                <h3 class="font-bold text-sm">{{ t('versionHistory.title') }}</h3>
             </div>
             <button
                 @click="$emit('close')"
@@ -116,7 +119,7 @@ watch(filesDB, () => {
                 v-if="history.length === 0"
                 class="flex flex-col items-center justify-center h-40 opacity-30 text-center p-4"
             >
-                <p class="text-xs">Nessuna versione ancora disponibile.</p>
+                <p class="text-xs">{{ t('versionHistory.noVersions') }}</p>
             </div>
 
             <div
@@ -141,7 +144,11 @@ watch(filesDB, () => {
                                     ? 'text-primary'
                                     : 'text-base-content/40'
                             "
-                            >Versione {{ history.length - idx }}</span
+                            >{{
+                                t('versionHistory.versionNumber', {
+                                    n: history.length - idx,
+                                })
+                            }}</span
                         >
                         <span class="text-[10px] opacity-40">{{
                             formatDate(ver.timestamp)
@@ -151,7 +158,7 @@ watch(filesDB, () => {
                         v-if="idx === 0"
                         class="badge badge-success badge-xs opacity-70"
                     >
-                        Attuale
+                        {{ t('versionHistory.current') }}
                     </div>
                 </div>
 
@@ -183,8 +190,8 @@ watch(filesDB, () => {
                         </svg>
                         {{
                             idx === 0 && !props.activeVersionId
-                                ? 'Stato Attivo'
-                                : 'In visualizzazione'
+                                ? t('versionHistory.activeState')
+                                : t('versionHistory.viewing')
                         }}
                     </span>
                 </div>
@@ -192,8 +199,10 @@ watch(filesDB, () => {
                     v-else
                     class="text-[10px] text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
                 >
-                    <span v-if="idx === 0">Torna allo stato attuale</span>
-                    <span v-else>Visualizza Anteprima</span>
+                    <span v-if="idx === 0">{{
+                        t('versionHistory.backToCurrent')
+                    }}</span>
+                    <span v-else>{{ t('versionHistory.viewPreview') }}</span>
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20"
@@ -213,8 +222,8 @@ watch(filesDB, () => {
         <div
             class="p-4 bg-base-200/50 text-[10px] opacity-40 text-center leading-tight"
         >
-            Vengono mantenute le ultime 20 versioni.<br />
-            Il ripristino sovrascriverive lo stato attuale.
+            {{ t('versionHistory.note1') }}<br />
+            {{ t('versionHistory.note2') }}
         </div>
     </div>
 </template>

@@ -1,15 +1,15 @@
 <template>
   <div class="flex flex-col w-full bg-base-100 overflow-hidden">
     <div class="p-4 border-b border-base-300 flex justify-between items-center bg-base-200/30">
-      <span class="font-bold text-xs uppercase tracking-widest opacity-60">Cronologia Chat</span>
+      <span class="font-bold text-xs uppercase tracking-widest opacity-60">{{ t('threadList.title') }}</span>
       <button class="btn btn-primary btn-sm rounded-full px-4" @click="emit('new-thread')">
-        Nuova conversazione
+        {{ t('threadList.newChat') }}
       </button>
     </div>
     
     <div class="flex-1 overflow-y-auto max-h-[60vh] p-4 space-y-2 custom-scrollbar">
       <div v-if="threads.length === 0" class="p-12 text-center opacity-40 text-sm italic">
-        Inizia la tua prima conversazione...
+        {{ t('threadList.empty') }}
       </div>
       <div 
         v-for="thread in threads" 
@@ -40,6 +40,10 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+
 const props = defineProps<{
   threads: any[]
   activeThreadId: string | null

@@ -1,24 +1,25 @@
 <template>
     <dialog class="modal" :class="{ 'modal-open': modelValue }">
         <div class="modal-box">
-            <h3 class="font-bold text-lg">AI Provider Settings</h3>
+            <h3 class="font-bold text-lg">{{ t('projectSettings.modalTitle') }}</h3>
             <p class="py-4 text-sm text-base-content/70">
-                Configure the AI provider and API key used for this specific
-                project.
+                {{ t('projectSettings.description') }}
                 <span
                     v-if="projectSettings?.hasToken"
                     class="text-success font-bold block mt-2"
-                    >✓ API Token is currently configured</span
+                    >{{ t('projectSettings.tokenConfigured') }}</span
                 >
                 <span v-else class="text-warning font-bold block mt-2"
-                    >⚠ No API Token configured yet</span
+                    >{{ t('projectSettings.tokenNotConfigured') }}</span
                 >
             </p>
 
             <form @submit.prevent="saveSettings" class="space-y-4">
                 <div class="form-control">
                     <label class="label"
-                        ><span class="label-text">Provider</span></label
+                        ><span class="label-text">{{
+                            t('projectSettings.providerLabel')
+                        }}</span></label
                     >
                     <select
                         v-model="settingsForm.provider"
@@ -35,17 +36,19 @@
 
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text"
-                            >Global Context / System Prompt</span
-                        >
-                        <span class="label-text-alt opacity-50 italic"
-                            >Overrides default behavior</span
-                        >
+                        <span class="label-text">{{
+                            t('projectSettings.systemPromptLabel')
+                        }}</span>
+                        <span class="label-text-alt opacity-50 italic">{{
+                            t('projectSettings.systemPromptSubLabel')
+                        }}</span>
                     </label>
                     <textarea
                         v-model="settingsForm.systemPrompt"
                         class="textarea textarea-bordered h-32 font-mono text-xs"
-                        placeholder="Provide custom instructions for the AI... (Empty = Default)"
+                        :placeholder="
+                            t('projectSettings.systemPromptPlaceholder')
+                        "
                     ></textarea>
                     <div class="mt-1 flex justify-end">
                         <button
@@ -55,8 +58,8 @@
                         >
                             {{
                                 showDefaultPrompt
-                                    ? 'Hide Default Prompt'
-                                    : 'View Default Prompt'
+                                    ? t('projectSettings.hideDefaultPrompt')
+                                    : t('projectSettings.viewDefaultPrompt')
                             }}
                         </button>
                     </div>
@@ -70,19 +73,21 @@
 
                 <div class="form-control">
                     <label class="label"
-                        ><span class="label-text">API Token</span></label
+                        ><span class="label-text">{{
+                            t('projectSettings.tokenLabel')
+                        }}</span></label
                     >
                     <input
                         v-model="settingsForm.token"
                         type="password"
-                        placeholder="sk-..."
+                        :placeholder="t('projectSettings.tokenPlaceholder')"
                         class="input input-bordered w-full"
                         :required="!projectSettings?.hasToken"
                     />
                     <label class="label" v-if="projectSettings?.hasToken">
-                        <span class="label-text-alt text-base-content/60"
-                            >Leave blank to keep existing token</span
-                        >
+                        <span class="label-text-alt text-base-content/60">{{
+                            t('projectSettings.tokenLeaveBlank')
+                        }}</span>
                     </label>
                 </div>
 
@@ -93,7 +98,7 @@
                         @click="$emit('update:modelValue', false)"
                         :disabled="savingSettings"
                     >
-                        Cancel
+                        {{ t('common.cancel') }}
                     </button>
                     <button
                         type="submit"
@@ -104,17 +109,18 @@
                             v-if="savingSettings"
                             class="loading loading-spinner loading-sm"
                         ></span>
-                        Save
+                        {{ t('common.save') }}
                     </button>
                 </div>
             </form>
 
             <div class="divider"></div>
             <div class="flex flex-col gap-2">
-                <h4 class="font-bold text-error">Danger Zone</h4>
+                <h4 class="font-bold text-error">
+                    {{ t('projectSettings.dangerZoneTitle') }}
+                </h4>
                 <p class="text-sm text-base-content/70">
-                    Once you delete a project, there is no going back. Please be
-                    certain.
+                    {{ t('projectSettings.dangerZoneDescription') }}
                 </p>
                 <div v-if="!showDeleteConfirm">
                     <button
@@ -122,7 +128,7 @@
                         class="btn btn-outline btn-error w-full mt-2"
                         @click="showDeleteConfirm = true"
                     >
-                        Delete Project
+                        {{ t('projectSettings.deleteProjectButton') }}
                     </button>
                 </div>
                 <div
@@ -130,18 +136,19 @@
                     class="bg-error/10 p-4 rounded-lg mt-2 border border-error/20"
                 >
                     <p class="text-sm font-bold mb-2 text-error">
-                        Type
-                        <span
-                            class="select-all font-mono bg-base-100 px-1 rounded"
-                            >{{ projectId }}</span
-                        >
-                        to confirm
+                        {{
+                            t('projectSettings.deleteConfirmInstructions', {
+                                id: projectId,
+                            })
+                        }}
                     </p>
                     <input
                         v-model="deleteConfirmText"
                         type="text"
                         class="input input-sm input-bordered w-full mb-2"
-                        placeholder="Project ID..."
+                        :placeholder="
+                            t('projectSettings.deleteConfirmPlaceholder')
+                        "
                     />
                     <div class="flex gap-2">
                         <button
@@ -156,14 +163,14 @@
                                 v-if="deleting"
                                 class="loading loading-spinner loading-xs"
                             ></span>
-                            Delete this project
+                            {{ t('projectSettings.deleteConfirmButton') }}
                         </button>
                         <button
                             type="button"
                             class="btn btn-sm btn-ghost"
                             @click="showDeleteConfirm = false"
                         >
-                            Cancel
+                            {{ t('common.cancel') }}
                         </button>
                     </div>
                 </div>
@@ -174,7 +181,7 @@
             class="modal-backdrop"
             @click="$emit('update:modelValue', false)"
         >
-            <button>close</button>
+            <button>{{ t('common.close') }}</button>
         </form>
     </dialog>
 </template>
@@ -182,7 +189,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { apiFetch } from '../utils/apiFetch.ts';
+
+const { t } = useI18n();
 
 const props = defineProps<{
     modelValue: boolean;
@@ -261,7 +271,7 @@ async function saveSettings() {
         emit('update:modelValue', false);
         settingsForm.value.token = ''; // clear memory
     } catch (e) {
-        alert('Failed to save settings');
+        alert(t('projectSettings.saveError'));
     } finally {
         savingSettings.value = false;
     }
@@ -283,7 +293,7 @@ async function deleteProject() {
             alert('Failed to delete project: ' + data.message);
         }
     } catch (e) {
-        alert('Failed to delete project');
+        alert(t('projectSettings.deleteError'));
     } finally {
         deleting.value = false;
     }

@@ -1,0 +1,122 @@
+{
+  "common": {
+    "save": "Salva",
+    "cancel": "Annulla",
+    "logout": "Logout",
+    "settings": "Impostazioni",
+    "loading": "Caricamento...",
+    "error": "Errore",
+    "close": "Chiudi"
+  },
+  "home": {
+    "title": "I Tuoi Progetti",
+    "loggedInAs": "Accesso effettuato come: {name}",
+    "createNewProject": "Crea Nuovo Progetto",
+    "projectIdPlaceholder": "ID Progetto Unico (es. il-mio-progetto)",
+    "createProject": "Crea Progetto",
+    "noProjectsFound": "Nessun progetto trovato. Creane uno sopra!",
+    "openStudio": "Apri Studio",
+    "created": "Creato:",
+    "roles": {
+      "developer": "Sviluppatore",
+      "viewer": "Visitatore"
+    }
+  },
+  "settings": {
+    "globalProfile": "Impostazioni Profilo Globale",
+    "description": "Configura il tuo provider AI predefinito e la tua chiave API. Saranno usati automaticamente per tutti i nuovi progetti che crei.",
+    "apiTokenConfigured": "Token API è attualmente configurato",
+    "noApiToken": "Nessun Token API predefinito configurato",
+    "provider": "Provider",
+    "apiToken": "Token API",
+    "leaveBlank": "Lascia vuoto per mantenere il token esistente",
+    "failedToSave": "Impossibile salvare le impostazioni"
+  },
+  "login": {
+    "title": "facilis.dev",
+    "subtitle": "Accedi al Vibe Coding Studio. Entra per continuare con i tuoi progetti.",
+    "username": "Nome Utente",
+    "password": "Password",
+    "submit": "Accedi",
+    "invalidCredentials": "Nome utente o password non validi"
+  },
+  "projectSettings": {
+    "modalTitle": "Impostazioni Provider AI",
+    "description": "Configura il provider AI e la chiave API usati per questo specifico progetto.",
+    "tokenConfigured": "✓ Il Token API è attualmente configurato",
+    "tokenNotConfigured": "⚠ Nessun Token API configurato ancora",
+    "providerLabel": "Provider",
+    "systemPromptLabel": "Contesto Globale / System Prompt",
+    "systemPromptSubLabel": "Sovrascrive il comportamento predefinito",
+    "systemPromptPlaceholder": "Fornisci istruzioni personalizzate per l'AI... (Vuoto = Predefinito)",
+    "hideDefaultPrompt": "Nascondi Prompt Predefinito",
+    "viewDefaultPrompt": "Visualizza Prompt Predefinito",
+    "tokenLabel": "Token API",
+    "tokenPlaceholder": "sk-...",
+    "tokenLeaveBlank": "Lascia vuoto per mantenere il token esistente",
+    "dangerZoneTitle": "Zona Pericolo",
+    "dangerZoneDescription": "Una volta eliminato un progetto, non si può tornare indietro. Per favore, sii sicuro.",
+    "deleteProjectButton": "Elimina Progetto",
+    "deleteConfirmInstructions": "Scrivi {id} per confermare",
+    "deleteConfirmPlaceholder": "Project ID...",
+    "deleteConfirmButton": "Elimina questo progetto",
+    "saveError": "Impossibile salvare le impostazioni",
+    "deleteError": "Impossibile eliminare il progetto"
+  },
+  "studio": {
+    "history": "Cronologia",
+    "vibeStudio": "Vibe Studio",
+    "suggestions": {
+      "buildLanding": "Crea una landing page in Vue.js...",
+      "refactorDatabase": "Rifattorizza la logica del database..."
+    },
+    "greeting": "Come posso aiutarti oggi?",
+    "placeholder": "Chiedi a facilis.dev...",
+    "disclaimer": "Facilis.dev è una IA e può commettere errori. Verifica le informazioni importanti.",
+    "initializing": "Inizializzazione Studio",
+    "syncing": "Sincronizzazione in corso...",
+    "deleteConfirm": "Sei sicuro di voler eliminare questa conversazione?",
+    "configureToken": "Per favore, configura prima il token API del tuo provider AI nelle impostazioni.",
+    "chatError": "Comunicazione con l'API di chat fallita: {error}"
+  },
+  "fileList": {
+    "title": "File del Progetto",
+    "noFiles": "Nessun file generato ancora.",
+    "deleteConfirm": "Eliminare {id}?"
+  },
+  "versionHistory": {
+    "title": "Cronologia Versioni",
+    "noVersions": "Nessuna versione ancora disponibile.",
+    "versionNumber": "Versione {n}",
+    "current": "Attuale",
+    "activeState": "Stato Attivo",
+    "viewing": "In visualizzazione",
+    "backToCurrent": "Torna allo stato attuale",
+    "viewPreview": "Visualizza Anteprima",
+    "note1": "Vengono mantenute le ultime 20 versioni.",
+    "note2": "Il ripristino sovrascriverive lo stato attuale."
+  },
+  "threadList": {
+    "title": "Cronologia Chat",
+    "newChat": "Nuova Conversazione",
+    "empty": "Inizia la tua prima conversazione..."
+  },
+  "sandbox": {
+    "readyTitle": "Pronto per il Prototipo",
+    "readySubtitle": "Inizia a chattare con l'AI per generare i file della tua applicazione.",
+    "code": "Codice",
+    "preview": "Anteprima",
+    "refresh": "Aggiorna Anteprima",
+    "export": "Esporta",
+    "previewBanner": "ANTEPRIMA VERSIONE:",
+    "restoring": "Ripristino in corso...",
+    "restoreButton": "Ripristina questa versione",
+    "exit": "Esci",
+    "restoreConfirm": "Il ripristino di questa versione sovrascriverà i file attuali e CANCELLERÀ tutti i messaggi E LE VERSIONI successivi per mantenere la coerenza lineare. Continuare?",
+    "restoreError": "Errore durante il ripristino della versione.",
+    "viewMobile": "Mobile",
+    "viewTablet": "Tablet",
+    "viewDesktop": "Desktop",
+    "rendering": "Rendering sandbox..."
+  }
+}

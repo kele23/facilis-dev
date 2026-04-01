@@ -1,0 +1,122 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "logout": "Logout",
+    "settings": "Settings",
+    "loading": "Loading...",
+    "error": "Error",
+    "close": "Close"
+  },
+  "home": {
+    "title": "Your Projects",
+    "loggedInAs": "Logged in as: {name}",
+    "createNewProject": "Create New Project",
+    "projectIdPlaceholder": "Unique Project ID (e.g. my-awesome-app)",
+    "createProject": "Create Project",
+    "noProjectsFound": "No projects found. Create one above!",
+    "openStudio": "Open Studio",
+    "created": "Created:",
+    "roles": {
+      "developer": "Developer",
+      "viewer": "Viewer"
+    }
+  },
+  "settings": {
+    "globalProfile": "Global Profile Settings",
+    "description": "Configure your default AI provider and API key. This will be automatically used for all new projects you create.",
+    "apiTokenConfigured": "API Token is currently configured",
+    "noApiToken": "No Default API Token configured",
+    "provider": "Provider",
+    "apiToken": "API Token",
+    "leaveBlank": "Leave blank to keep existing token",
+    "failedToSave": "Failed to save settings"
+  },
+  "login": {
+    "title": "facilis.dev",
+    "subtitle": "Access the Vibe Coding Studio. Sign in to continue to your projects.",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Login",
+    "invalidCredentials": "Invalid username or password"
+  },
+  "projectSettings": {
+    "modalTitle": "AI Provider Settings",
+    "description": "Configure the AI provider and API key used for this specific project.",
+    "tokenConfigured": "✓ API Token is currently configured",
+    "tokenNotConfigured": "⚠ No API Token configured yet",
+    "providerLabel": "Provider",
+    "systemPromptLabel": "Global Context / System Prompt",
+    "systemPromptSubLabel": "Overrides default behavior",
+    "systemPromptPlaceholder": "Provide custom instructions for the AI... (Empty = Default)",
+    "hideDefaultPrompt": "Hide Default Prompt",
+    "viewDefaultPrompt": "View Default Prompt",
+    "tokenLabel": "API Token",
+    "tokenPlaceholder": "sk-...",
+    "tokenLeaveBlank": "Leave blank to keep existing token",
+    "dangerZoneTitle": "Danger Zone",
+    "dangerZoneDescription": "Once you delete a project, there is no going back. Please be certain.",
+    "deleteProjectButton": "Delete Project",
+    "deleteConfirmInstructions": "Type {id} to confirm",
+    "deleteConfirmPlaceholder": "Project ID...",
+    "deleteConfirmButton": "Delete this project",
+    "saveError": "Failed to save settings",
+    "deleteError": "Failed to delete project"
+  },
+  "studio": {
+    "history": "History",
+    "vibeStudio": "Vibe Studio",
+    "suggestions": {
+      "buildLanding": "Build a Vue.js landing page...",
+      "refactorDatabase": "Refactor the database logic..."
+    },
+    "greeting": "How can I help you today?",
+    "placeholder": "Ask facilis.dev...",
+    "disclaimer": "Facilis.dev is an AI and can make mistakes. Verify important information.",
+    "initializing": "Initializing Studio",
+    "syncing": "Syncing in progress...",
+    "deleteConfirm": "Are you sure you want to delete this conversation?",
+    "configureToken": "Please configure your AI Provider API token in the settings first.",
+    "chatError": "Chat API communication failed: {error}"
+  },
+  "fileList": {
+    "title": "Project Files",
+    "noFiles": "No files generated yet.",
+    "deleteConfirm": "Delete {id}?"
+  },
+  "versionHistory": {
+    "title": "Version History",
+    "noVersions": "No versions available yet.",
+    "versionNumber": "Version {n}",
+    "current": "Current",
+    "activeState": "Active State",
+    "viewing": "Viewing",
+    "backToCurrent": "Back to current state",
+    "viewPreview": "View Preview",
+    "note1": "The last 20 versions are kept.",
+    "note2": "Restoring will overwrite the current state."
+  },
+  "threadList": {
+    "title": "Chat History",
+    "newChat": "New Chat",
+    "empty": "Start your first conversation..."
+  },
+  "sandbox": {
+    "readyTitle": "Ready to Prototype",
+    "readySubtitle": "Start chatting with the AI to generate your application files.",
+    "code": "Code",
+    "preview": "Preview",
+    "refresh": "Refresh Preview",
+    "export": "Export",
+    "previewBanner": "VERSION PREVIEW:",
+    "restoring": "Restoring...",
+    "restoreButton": "Restore this version",
+    "exit": "Exit",
+    "restoreConfirm": "Restoring this version will overwrite current files and DELETE all subsequent messages AND VERSIONS to maintain linear consistency. Continue?",
+    "restoreError": "Error while restoring version.",
+    "viewMobile": "Mobile",
+    "viewTablet": "Tablet",
+    "viewDesktop": "Desktop",
+    "rendering": "Rendering sandbox..."
+  }
+}

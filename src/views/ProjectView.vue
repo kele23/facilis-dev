@@ -32,7 +32,7 @@
                         <button
                             class="btn btn-ghost btn-sm px-1 flex-shrink-0 opacity-70 hover:opacity-100"
                             @click="showHistoryModal = true"
-                            title="Cronologia"
+                            :title="t('studio.history')"
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -50,7 +50,7 @@
                             </svg>
                         </button>
                         <span class="font-bold text-lg truncate">{{
-                            activeThread?.title || 'Vibe Studio'
+                            activeThread?.title || t('studio.vibeStudio')
                         }}</span>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0 ml-2">
@@ -112,20 +112,12 @@
                         <div v-else class="flex flex-col w-full gap-2">
                             <div class="flex items-center gap-2 mb-1">
                                 <div
-                                    class="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center"
+                                    class="w-6 h-6 flex items-center justify-center opacity-80"
                                 >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 24 24"
-                                        fill="currentColor"
-                                        class="w-4 h-4 text-primary"
-                                    >
-                                        <path
-                                            fill-rule="evenodd"
-                                            d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
-                                            clip-rule="evenodd"
-                                        />
-                                    </svg>
+                                    <FacilisLogo
+                                        :size="18"
+                                        color="currentColor"
+                                    />
                                 </div>
                                 <span
                                     class="text-xs font-bold opacity-60 uppercase tracking-tighter"
@@ -147,17 +139,17 @@
                             <div
                                 class="p-4 rounded-2xl bg-base-100 border border-base-300 hover:border-primary transition-colors cursor-pointer text-sm"
                             >
-                                Build a Vue.js landing page...
+                                {{ t('studio.suggestions.buildLanding') }}
                             </div>
                             <div
                                 class="p-4 rounded-2xl bg-base-100 border border-base-300 hover:border-primary transition-colors cursor-pointer text-sm"
                             >
-                                Refactor the database logic...
+                                {{ t('studio.suggestions.refactorDatabase') }}
                             </div>
                         </div>
-                        <span class="text-xl font-light"
-                            >How can I help you today?</span
-                        >
+                        <span class="text-xl font-light">{{
+                            t('studio.greeting')
+                        }}</span>
                     </div>
                 </div>
 
@@ -172,7 +164,7 @@
                             <textarea
                                 ref="chatInput"
                                 v-model="prompt"
-                                placeholder="Chiedi a facilis.dev..."
+                                :placeholder="t('studio.placeholder')"
                                 class="w-full bg-transparent border-none focus:ring-0 focus:outline-none py-3 text-sm resize-none custom-scrollbar max-h-48"
                                 rows="1"
                                 :disabled="loading"
@@ -208,8 +200,7 @@
                         </div>
                     </form>
                     <div class="text-[10px] text-center mt-3 opacity-30">
-                        Facilis.dev è una IA e può commettere errori. Verifica
-                        le informazioni importanti.
+                        {{ t('studio.disclaimer') }}
                     </div>
                 </div>
             </div>
@@ -249,12 +240,14 @@
                     class="btn btn-sm btn-ghost"
                     @click="showHistoryModal = false"
                 >
-                    Chiudi
+                    {{ t('common.close') }}
                 </button>
             </div>
         </div>
         <form method="dialog" class="modal-backdrop">
-            <button @click="showHistoryModal = false">close</button>
+            <button @click="showHistoryModal = false">
+                {{ t('common.close') }}
+            </button>
         </form>
     </dialog>
 
@@ -277,11 +270,9 @@
                         class="absolute inset-0 flex items-center justify-center"
                     >
                         <div
-                            class="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-xl shadow-primary/20 rotate-12"
+                            class="bg-primary/10 p-6 rounded-[2.5rem] shadow-2xl shadow-primary/20 animate-in zoom-in spin-in duration-1000"
                         >
-                            <span class="text-white font-bold text-2xl italic"
-                                >f.</span
-                            >
+                            <FacilisLogo :size="64" color="oklch(var(--p))" />
                         </div>
                     </div>
                 </div>
@@ -289,12 +280,12 @@
                     <h2
                         class="text-xl font-bold text-base-content tracking-tight"
                     >
-                        Initializing Studio
+                        {{ t('studio.initializing') }}
                     </h2>
                     <p
                         class="text-xs text-base-content/40 font-medium uppercase tracking-[0.2em]"
                     >
-                        Sincronizzazione in corso...
+                        {{ t('studio.syncing') }}
                     </p>
                 </div>
             </div>
@@ -319,12 +310,15 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { marked } from 'marked';
 import { useRoute, useRouter } from 'vue-router';
 import { useDB } from '../composable/useDB.ts';
+import { useI18n } from 'vue-i18n';
 
 import { apiFetch } from '../utils/apiFetch.ts';
 import ProjectSandbox from '../components/ProjectSandbox.vue';
 import ProjectSettings from '../components/ProjectSettings.vue';
 import ThreadList from '../components/ThreadList.vue';
+import FacilisLogo from '../components/FacilisLogo.vue';
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const projectId = route.params.id as string;
@@ -367,13 +361,17 @@ const activeThreadId = ref<string | null>(null);
 
 const { db, filesDB, setCurrentProject, chatReady, filesReady } = useDB();
 const syncTimeoutReached = ref(false);
+const isInitialized = ref(false);
 
 const isSyncing = computed(() => {
-    // If online, wait for both; if offline, we don't wait (or we handle it differently)
-    // Adding a safety timeout to avoid permanent lock
-    return !syncTimeoutReached.value && (!chatReady.value || !filesReady.value);
+    return !isInitialized.value;
 });
 let changesHandler: any = null;
+
+const syncCheckData = ref<{
+    chat?: { hasChanges: boolean; newSeq: string; latestDocId: string | null; latestDocDeleted?: boolean };
+    files?: { hasChanges: boolean; newSeq: string; latestDocId: string | null; latestDocDeleted?: boolean };
+} | null>(null);
 
 const activeThread = computed(() =>
     threads.value.find((t) => t._id === activeThreadId.value),
@@ -387,22 +385,86 @@ async function loadData() {
 
     if (!db.value) return;
 
-    // Wait for the sync catch-up (max 10s via timeout or sync itself)
-    const start = Date.now();
-    while (
-        !chatReady.value &&
-        !syncTimeoutReached.value &&
-        Date.now() - start < 10000
-    ) {
-        await new Promise((r) => setTimeout(r, 100));
+    // 1. Check for server-side changes before proceeding
+    try {
+        const lastChatSeq =
+            localStorage.getItem(`facilis-sync-chat-${projectId}`) || '0';
+        const lastFilesSeq =
+            localStorage.getItem(`facilis-sync-files-${projectId}`) || '0';
+
+        const resp = await apiFetch(
+            `/api/projects/${projectId}/sync-check?chatSeq=${lastChatSeq}&filesSeq=${lastFilesSeq}`,
+        );
+        if (resp.ok) {
+            syncCheckData.value = await resp.json();
+        }
+
+        console.log('[SYNC] Check result:', syncCheckData.value);
+    } catch (e) {
+        console.error(
+            '[SYNC] Check failed, falling back to traditional wait:',
+            e,
+        );
+    }
+
+    // 2. Wait for the sync catch-up (using a polling loop on the specific doc IDs)
+    const chatDocToWaitFor = syncCheckData.value?.chat?.hasChanges ? syncCheckData.value?.chat?.latestDocId : null;
+    const filesDocToWaitFor = syncCheckData.value?.files?.hasChanges ? syncCheckData.value?.files?.latestDocId : null;
+
+    if (chatDocToWaitFor || filesDocToWaitFor) {
+        console.log(`[SYNC] Waiting for documents. Chat: ${chatDocToWaitFor || 'up-to-date'}, Files: ${filesDocToWaitFor || 'up-to-date'}`);
+        const start = Date.now();
+        
+        while (!syncTimeoutReached.value && Date.now() - start < 10000) {
+            let chatReadyStatus = !chatDocToWaitFor;
+            let filesReadyStatus = !filesDocToWaitFor;
+
+            if (chatDocToWaitFor && db.value) {
+                try {
+                    const res = await db.value.allDocs({ keys: [chatDocToWaitFor] });
+                    const row: any = res.rows[0];
+                    if (!row.error || row.error !== 'not_found' || row.value?.deleted) {
+                        chatReadyStatus = true; // Found it, or it's definitively deleted locally
+                    }
+                } catch (e: any) {
+                    // unexpected error fetching allDocs
+                }
+            }
+
+            if (filesDocToWaitFor && filesDB.value) {
+                try {
+                    const res = await filesDB.value.allDocs({ keys: [filesDocToWaitFor] });
+                    const row: any = res.rows[0];
+                    if (!row.error || row.error !== 'not_found' || row.value?.deleted) {
+                        filesReadyStatus = true; // Found it, or it's definitively deleted locally
+                    }
+                } catch (e: any) {
+                    // unexpected error fetching allDocs
+                }
+            }
+
+            if (chatReadyStatus && filesReadyStatus) {
+                console.log('[SYNC] Synced target documents! Booting UI.');
+                break;
+            }
+
+            // Also fallback check if pouchdb triggers ready just in case of weird docs
+            if (chatReady.value && filesReady.value && Date.now() - start > 2000) {
+                 console.log('[SYNC] Forced boot via pouch pause (fallback).');
+                 break;
+            }
+
+            await new Promise((r) => setTimeout(r, 200));
+        }
+    } else {
+        console.log('[SYNC] Server reported no changes. Booting UI immediately.');
     }
 
     try {
-        // Carica tutti i documenti (thread e messaggi)
+        // 3. Load all documents (threads & messages) from local DB
         const res = await db.value.allDocs({ include_docs: true });
         const allDocs = res.rows.map((r: any) => r.doc);
 
-        // Separa threads e messaggi
         threads.value = allDocs
             .filter((d: any) => d.type === 'thread')
             .sort(
@@ -419,70 +481,42 @@ async function loadData() {
                     new Date(b.timestamp).getTime(),
             );
 
-        // Se non ci sono thread, ne creiamo uno di default
-        if (threads.value.length === 0) {
-            await createNewThread('Default Conversation');
-        } else if (!activeThreadId.value) {
-            // Seleziona il thread più recente
+        if (!activeThreadId.value && threads.value.length > 0) {
             activeThreadId.value = threads.value[0]._id;
         }
 
         scrollToBottom();
 
-        // Controllo se ci sono file per mostrare la sandbox
-        if (filesDB.value) {
-            const fileRes = await filesDB.value.allDocs({ limit: 1 });
-            if (fileRes.rows.length > 0) {
-                appReady.value = true;
-            }
+        // Always signal app readiness
+        appReady.value = true;
+
+        // Final verification for project emptiness
+        if (chatReady.value && threads.value.length === 0) {
+            console.log(
+                '[CHAT] Sync confirmed empty project. Creating default...',
+            );
+            await createNewThread('Default Conversation');
         }
-    } catch (e) {
+
+        // 4. Update sync markers in localStorage
+        if (syncCheckData.value?.chat?.newSeq) {
+            localStorage.setItem(
+                `facilis-sync-chat-${projectId}`,
+                syncCheckData.value.chat.newSeq,
+            );
+        }
+        if (syncCheckData.value?.files?.newSeq) {
+            localStorage.setItem(
+                `facilis-sync-files-${projectId}`,
+                syncCheckData.value.files.newSeq,
+            );
+        }
+
+        isInitialized.value = true;
+    } catch (e: any) {
         console.error('Error loading chat data', e);
+        appReady.value = true;
     }
-
-    // Gestione cambiamenti real-time
-    changesHandler = db.value
-        .changes({
-            since: 'now',
-            live: true,
-            include_docs: true,
-        })
-        .on('change', (change: any) => {
-            if (change.deleted) {
-                messages.value = messages.value.filter(
-                    (m) => m._id !== change.id,
-                );
-                threads.value = threads.value.filter(
-                    (t) => t._id !== change.id,
-                );
-                if (activeThreadId.value === change.id) {
-                    activeThreadId.value = threads.value[0]?._id || null;
-                }
-                return;
-            }
-
-            const doc = change.doc;
-            if (doc.type === 'thread') {
-                const idx = threads.value.findIndex((t) => t._id === doc._id);
-                if (idx > -1) threads.value[idx] = doc;
-                else threads.value.unshift(doc);
-                threads.value.sort(
-                    (a: any, b: any) =>
-                        new Date(b.updatedAt).getTime() -
-                        new Date(a.updatedAt).getTime(),
-                );
-            } else if (doc.role) {
-                const idx = messages.value.findIndex((m) => m._id === doc._id);
-                if (idx > -1) messages.value[idx] = doc;
-                else messages.value.push(doc);
-                messages.value.sort(
-                    (a: any, b: any) =>
-                        new Date(a.timestamp).getTime() -
-                        new Date(b.timestamp).getTime(),
-                );
-                if (doc.threadId === activeThreadId.value) scrollToBottom();
-            }
-        });
 }
 
 async function createNewThread(title = 'New Chat') {
@@ -575,11 +609,7 @@ async function saveVersion(title: string) {
 }
 
 async function deleteThread(id: string) {
-    if (
-        !db.value ||
-        !confirm('Are you sure you want to delete this conversation?')
-    )
-        return;
+    if (!db.value || !confirm(t('studio.deleteConfirm'))) return;
 
     try {
         // Trova thread doc
@@ -666,9 +696,7 @@ async function sendMessage() {
     if (!prompt.value.trim() || loading.value || !activeThreadId.value) return;
 
     if (!projectSettings.value?.hasToken) {
-        alert(
-            'Please configure your AI Provider API token in the settings first.',
-        );
+        alert(t('studio.configureToken'));
         showSettingsModal.value = true;
         return;
     }
@@ -777,9 +805,7 @@ async function sendMessage() {
         }
     } catch (e: any) {
         console.error('Chat API error', e);
-        alert(
-            'Chat API communication failed: ' + (e.message || 'Unknown error'),
-        );
+        alert(t('studio.chatError', { error: e.message || 'Unknown error' }));
     } finally {
         loading.value = false;
     }

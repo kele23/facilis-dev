@@ -1,0 +1,12 @@
+{
+    "name": "facilis",
+    "compatibility_date": "2026-03-21",
+    "compatibility_flags": ["enable_nodejs_compat"],
+    "vpc_services": [
+        {
+            "binding": "VPC_SERVICE",
+            "service_id": "019cbfbe-206b-7282-920e-fc05b7e4f4c1",
+            "remote": true
+        }
+    ]
+}

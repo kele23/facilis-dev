@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onUnmounted, computed } from 'vue';
-import { useDB } from '../composable/useDB';
+import { useDB } from '../composable/useDB.ts';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { VueMonacoEditor } from '@guolao/vue-monaco-editor';
@@ -79,15 +79,17 @@ async function updateSandbox() {
         let currentFiles: any[] = [];
         if (previewSnapshot.value) {
             // Map snapshot files to the format used by updateSandbox
-            currentFiles = Object.entries(previewSnapshot.value.files).map(([id, content]) => ({
-                _id: id,
-                content: content
-            }));
+            currentFiles = Object.entries(previewSnapshot.value.files).map(
+                ([id, content]) => ({
+                    _id: id,
+                    content: content,
+                }),
+            );
         } else {
             const res = await filesDB.value.allDocs({ include_docs: true });
             currentFiles = res.rows.map((r: any) => r.doc);
         }
-        
+
         files.value = currentFiles;
 
         // Revoke old URLs
@@ -127,7 +129,9 @@ async function updateSandbox() {
             html = html.replace(regex, `$1${blobUrl}$1`);
         }
 
-        processedHtml.value = html.replace('</head>', `
+        processedHtml.value = html.replace(
+            '</head>',
+            `
     <style>
       :root { scrollbar-gutter: stable; }
       ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -140,7 +144,8 @@ async function updateSandbox() {
       window.FACILIS_DATA_DB_URL = '${window.location.origin}/couch/facilis-data-${props.projectId}';
     <\/script>
     <script src="https://cdn.jsdelivr.net/npm/pouchdb@8.0.1/dist/pouchdb.min.js"><\/script>
-    </head>`);
+    </head>`,
+        );
         iframeKey.value++;
     } catch (e) {
         console.error('[SANDBOX] Update error', e);
@@ -187,9 +192,14 @@ function exitPreview() {
 
 async function restoreCurrentPreview() {
     if (!previewSnapshot.value || !filesDB.value) return;
-    
-    if (!confirm('Ripristinare questa versione sovrascriverà i file attuali e CANCELLERÀ tutti i messaggi E LE VERSIONI successivi per mantenere la coerenza lineare. Continuare?')) return;
-    
+
+    if (
+        !confirm(
+            'Ripristinare questa versione sovrascriverà i file attuali e CANCELLERÀ tutti i messaggi E LE VERSIONI successivi per mantenere la coerenza lineare. Continuare?',
+        )
+    )
+        return;
+
     restoring.value = true;
     const { db } = useDB();
     try {
@@ -202,8 +212,11 @@ async function restoreCurrentPreview() {
             const toDelete = chatRes.rows
                 .map((r: any) => r.doc)
                 .filter((doc: any) => {
-                    const docTime = doc.timestamp ? new Date(doc.timestamp).getTime() : 
-                                    doc.createdAt ? new Date(doc.createdAt).getTime() : 0;
+                    const docTime = doc.timestamp
+                        ? new Date(doc.timestamp).getTime()
+                        : doc.createdAt
+                          ? new Date(doc.createdAt).getTime()
+                          : 0;
                     return docTime > snapshotTime;
                 })
                 .map((doc: any) => ({ ...doc, _deleted: true }));
@@ -218,11 +231,13 @@ async function restoreCurrentPreview() {
         const futureVersions = allDocs.rows
             .map((r: any) => r.doc)
             .filter((doc: any) => {
-                return doc._id.startsWith('version:') && 
-                       new Date(doc.timestamp).getTime() > snapshotTime;
+                return (
+                    doc._id.startsWith('version:') &&
+                    new Date(doc.timestamp).getTime() > snapshotTime
+                );
             })
             .map((doc: any) => ({ ...doc, _deleted: true }));
-        
+
         if (futureVersions.length > 0) {
             await filesDB.value.bulkDocs(futureVersions);
         }
@@ -463,23 +478,51 @@ onUnmounted(() => {
                 class="flex-1 flex flex-col relative items-center justify-center p-8 transition-all duration-500"
             >
                 <!-- Preview Banner -->
-                <div v-if="isPreviewMode" class="absolute top-0 inset-x-0 bg-primary text-primary-content px-4 py-1.5 z-40 flex items-center justify-between text-xs font-medium shadow-md">
+                <div
+                    v-if="isPreviewMode"
+                    class="absolute top-0 inset-x-0 bg-primary text-primary-content px-4 py-1.5 z-40 flex items-center justify-between text-xs font-medium shadow-md"
+                >
                     <div class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4" :class="{ 'animate-pulse': !restoring }">
-                            <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
-                            <path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            class="w-4 h-4"
+                            :class="{ 'animate-pulse': !restoring }"
+                        >
+                            <path
+                                d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"
+                            />
+                            <path
+                                fill-rule="evenodd"
+                                d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                                clip-rule="evenodd"
+                            />
                         </svg>
                         <span v-if="restoring" class="flex items-center gap-2">
-                            <span class="loading loading-spinner loading-xs"></span>
+                            <span
+                                class="loading loading-spinner loading-xs"
+                            ></span>
                             Ripristino in corso...
                         </span>
-                        <span v-else>ANTEPRIMA VERSIONE: {{ previewSnapshot.title }}</span>
+                        <span v-else
+                            >ANTEPRIMA VERSIONE:
+                            {{ previewSnapshot.title }}</span
+                        >
                     </div>
                     <div class="flex items-center gap-2">
-                        <button @click="restoreCurrentPreview" :disabled="restoring" class="btn btn-xs bg-white text-primary border-none hover:bg-white/90 rounded-lg font-bold">
+                        <button
+                            @click="restoreCurrentPreview"
+                            :disabled="restoring"
+                            class="btn btn-xs bg-white text-primary border-none hover:bg-white/90 rounded-lg font-bold"
+                        >
                             Ripristina questa versione
                         </button>
-                        <button @click="exitPreview" :disabled="restoring" class="btn btn-xs btn-ghost hover:bg-white/10 text-white rounded-lg">
+                        <button
+                            @click="exitPreview"
+                            :disabled="restoring"
+                            class="btn btn-xs btn-ghost hover:bg-white/10 text-white rounded-lg"
+                        >
                             Esci
                         </button>
                     </div>
@@ -598,13 +641,16 @@ onUnmounted(() => {
         <!-- Version History Sidebar (Teleported to avoid clipping) -->
         <Teleport to="body">
             <Transition name="slide">
-                <VersionHistory 
+                <VersionHistory
                     v-if="showHistory"
                     class="fixed inset-y-0 right-0 z-[100]"
-                    :project-id="projectId" 
+                    :project-id="projectId"
                     :activeThreadId="activeThreadId"
                     :activeVersionId="previewSnapshot?._id || null"
-                    @close="showHistory = false; exitPreview()"
+                    @close="
+                        showHistory = false;
+                        exitPreview();
+                    "
                     @preview="handlePreview"
                     @exit-preview="exitPreview"
                     @restored="handleRestored"

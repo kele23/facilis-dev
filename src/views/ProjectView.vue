@@ -216,9 +216,9 @@
         </div>
 
         <div class="flex-1 flex flex-col min-w-0">
-            <ProjectSandbox 
-                :projectId="projectId" 
-                :appReady="appReady" 
+            <ProjectSandbox
+                :projectId="projectId"
+                :appReady="appReady"
                 :activeThreadId="activeThreadId"
             />
         </div>
@@ -286,10 +286,14 @@
                     </div>
                 </div>
                 <div class="flex flex-col items-center gap-2 text-center">
-                    <h2 class="text-xl font-bold text-base-content tracking-tight">
+                    <h2
+                        class="text-xl font-bold text-base-content tracking-tight"
+                    >
                         Initializing Studio
                     </h2>
-                    <p class="text-xs text-base-content/40 font-medium uppercase tracking-[0.2em]">
+                    <p
+                        class="text-xs text-base-content/40 font-medium uppercase tracking-[0.2em]"
+                    >
                         Sincronizzazione in corso...
                     </p>
                 </div>
@@ -314,9 +318,9 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { marked } from 'marked';
 import { useRoute, useRouter } from 'vue-router';
-import { useDB } from '../composable/useDB';
+import { useDB } from '../composable/useDB.ts';
 
-import { apiFetch } from '../utils/apiFetch';
+import { apiFetch } from '../utils/apiFetch.ts';
 import ProjectSandbox from '../components/ProjectSandbox.vue';
 import ProjectSettings from '../components/ProjectSettings.vue';
 import ThreadList from '../components/ThreadList.vue';
@@ -385,8 +389,12 @@ async function loadData() {
 
     // Wait for the sync catch-up (max 10s via timeout or sync itself)
     const start = Date.now();
-    while (!chatReady.value && !syncTimeoutReached.value && Date.now() - start < 10000) {
-        await new Promise(r => setTimeout(r, 100));
+    while (
+        !chatReady.value &&
+        !syncTimeoutReached.value &&
+        Date.now() - start < 10000
+    ) {
+        await new Promise((r) => setTimeout(r, 100));
     }
 
     try {
@@ -530,7 +538,7 @@ async function saveVersion(title: string) {
             type: 'snapshot',
             files,
             timestamp: new Date().toISOString(),
-            title
+            title,
         };
         await filesDB.value.put(versionDoc as any);
 
@@ -545,7 +553,7 @@ async function saveVersion(title: string) {
         historyDoc.versions.unshift({
             id: versionId,
             timestamp: versionDoc.timestamp,
-            title
+            title,
         });
 
         // Rotation logic: keep only 20

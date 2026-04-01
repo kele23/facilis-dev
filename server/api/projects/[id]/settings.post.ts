@@ -1,7 +1,7 @@
 import { defineEventHandler, readBody, HTTPError } from 'nitro/h3';
-import { verifyJWT } from '../../../utils/auth';
-import { useCouchAdmin } from '../../../utils/couch';
-import { encryptToken } from '../../../utils/crypto';
+import { verifyJWT } from '../../../utils/auth.ts';
+import { useCouchAdmin } from '../../../utils/couch.ts';
+import { encryptToken } from '../../../utils/crypto.ts';
 
 export default defineEventHandler(async (event) => {
     const user = await verifyJWT(event);

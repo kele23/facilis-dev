@@ -13,6 +13,7 @@
     "@types/file-saver": "^2.0.7",
     "@types/marked": "^6.0.0",
     "@vueuse/core": "^10.9.0",
+    "consola": "^3.4.2",
     "events": "^3.3.0",
     "file-saver": "^2.0.5",
     "jose": "^5.2.3",

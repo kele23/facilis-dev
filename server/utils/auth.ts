@@ -1,47 +1,74 @@
-import { SignJWT, jwtVerify } from "jose";
-import { H3Event, HTTPError, getCookie } from "nitro/h3";
-import { useRuntimeConfig } from "nitro/runtime-config";
+import { SignJWT, jwtVerify } from 'jose';
+import { H3Event, HTTPError, getCookie } from 'nitro/h3';
+import { useRuntimeConfig } from 'nitro/runtime-config';
+import { UserTokenPayload } from '../../types/user.ts';
 
 export interface User {
-  name: string;
-  roles: string[];
-  refresh?: boolean;
+    name: string;
+    roles: string[];
+    refresh?: boolean;
 }
 
 const getSecret = () =>
-  new TextEncoder().encode(useRuntimeConfig().jwtSecret as string);
+    new TextEncoder().encode(useRuntimeConfig().jwtSecret as string);
 
-export async function createJWT(user: User, expiresIn: string = "10m", isRefresh: boolean = false): Promise<string> {
-  return await new SignJWT({ ...user, refresh: isRefresh })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime(expiresIn)
-    .sign(getSecret());
+export async function createJWT(
+    user: User,
+    expiresIn: string = '10m',
+    isRefresh: boolean = false,
+): Promise<string> {
+    return await new SignJWT({ ...user, refresh: isRefresh })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setIssuedAt()
+        .setExpirationTime(expiresIn)
+        .sign(getSecret());
 }
 
-export async function verifyJWT(event: H3Event): Promise<User> {
-  const authHeader = event.node.req.headers["authorization"];
-  let token = "";
+export async function verifyJWT(
+    event: H3Event,
+    silent = false,
+): Promise<UserTokenPayload> {
+    const config = useRuntimeConfig();
+    const token = getCookie(event, 'token');
 
-  if (authHeader && authHeader.startsWith("Bearer ")) {
-    token = authHeader.substring(7);
-  } else {
-    // try the new generic token cookie, keep fallback for auth_token just in case
-    token = getCookie(event, "token") || getCookie(event, "auth_token") || "";
-  }
+    if (!token) {
+        throw new HTTPError('Unauthorized: Missing token', {
+            status: 401,
+            data: { silent },
+        });
+    }
 
-  if (!token) {
-    throw new HTTPError("Unauthorized: No token provided", { status: 401 });
-  }
+    try {
+        const secret = new TextEncoder().encode(config.jwtSecret);
+        const { payload } = await jwtVerify(token, secret);
+        const userPayload = payload as unknown as UserTokenPayload;
+        event.context.user = userPayload;
+        return userPayload;
+    } catch (err) {
+        throw new HTTPError('Unauthorized: Invalid token', {
+            status: 401,
+            data: { silent },
+        });
+    }
+}
 
-  try {
-    const { payload } = await jwtVerify(token, getSecret());
-    return {
-      name: payload.name as string,
-      roles: payload.roles as string[],
-      refresh: payload.refresh as boolean
-    };
-  } catch (error) {
-    throw new HTTPError("Unauthorized: Invalid token", { status: 401 });
-  }
+// verify if user is an administrator
+export async function verifyAdministrator(
+    event: H3Event,
+    silent = false,
+): Promise<UserTokenPayload> {
+    const config = useRuntimeConfig();
+    const user = await verifyJWT(event, silent);
+
+    if (!user.roles.includes(config.lgAdminRole)) {
+        throw new HTTPError(
+            'User not administrator, required administrator role to continue',
+            {
+                status: 403,
+                data: { silent },
+            },
+        );
+    }
+
+    return user;
 }

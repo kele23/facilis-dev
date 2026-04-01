@@ -28,6 +28,9 @@ importers:
       '@vueuse/core':
         specifier: ^10.9.0
         version: 10.11.1(vue@3.5.31(typescript@5.9.3))
+      consola:
+        specifier: ^3.4.2
+        version: 3.4.2
       events:
         specifier: ^3.3.0
         version: 3.3.0

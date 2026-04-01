@@ -1,31 +1,62 @@
-import { defineEventHandler, readBody, setCookie, HTTPError, type H3Event } from 'nitro/h3';
-import { createJWT } from '../../utils/auth';
-import { checkLogin, getUserOrThrow } from '../../utils/user';
+import {
+    defineEventHandler,
+    HTTPError,
+    readBody,
+    setCookie,
+    type H3Event,
+} from 'nitro/h3';
+import { useRuntimeConfig } from 'nitro/runtime-config';
+import { checkLogin, getUserOrThrow } from '../../utils/user.ts';
+import { SignJWT } from 'jose';
 
 export default defineEventHandler(async (event: H3Event) => {
-  const body = await readBody<{ username?: string; password?: string }>(event);
-  const { username, password } = body || {};
+    const config = useRuntimeConfig();
 
-  if (!username || !password) {
-    throw new HTTPError('Provide username and password', { status: 401 });
-  }
+    const body = await readBody<{ username?: string; password?: string }>(
+        event,
+    );
+    const { username, password } = body || {};
 
-  const ok = await checkLogin(event, username, password);
-  if (!ok) {
-    throw new HTTPError('Invalid credentials', { status: 401 });
-  }
+    if (!username || !password) {
+        throw new HTTPError('Provide username and password', { status: 401 });
+    }
 
-  const user = await getUserOrThrow(username, event);
+    const ok = await checkLogin(event, username, password);
+    if (!ok) {
+        throw new HTTPError('Invalid credentials', { status: 401 });
+    }
 
-  const token = await createJWT(user as any, "10m", false);
-  const refreshToken = await createJWT(user as any, "30d", true);
+    const user = await getUserOrThrow(username, event);
 
-  setCookie(event, 'token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 60 * 10, // 10 minutes
-    path: '/',
-  });
+    const secret = new TextEncoder().encode(config.jwtSecret);
 
-  return { success: true, refreshToken, user };
+    // Main token
+    const token = await new SignJWT({
+        sub: user.name,
+        name: user.name,
+        roles: user.roles,
+    })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setExpirationTime('10m')
+        .sign(secret);
+
+    // Refresh token
+    const refreshToken = await new SignJWT({
+        name: user.name,
+        refresh: true,
+    })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setExpirationTime('30d')
+        .sign(secret);
+
+    // Set cookie
+    setCookie(event, 'token', token, {
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 60 * 10, // 10 minutes
+        sameSite: true,
+    });
+
+    return { success: true, refreshToken, user };
 });

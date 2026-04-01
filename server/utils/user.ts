@@ -1,57 +1,97 @@
-import { createError, type H3Event, HTTPError } from 'nitro/h3';
+import { H3Event, HTTPError } from 'nitro/h3';
 import { useRuntimeConfig } from 'nitro/runtime-config';
-import { useCouchAdmin } from './couch';
+import { User } from '../../types/user.ts';
+import { useCouchAdmin } from './couch.ts';
+import { logger } from './logger.ts';
 
-export interface User {
-  name: string;
-  roles: string[];
-}
+/**
+ * Check if username password belong to user
+ * @param {name, password} The user credentials
+ * @returns true if login successful
+ */
+export const checkLogin = async (
+    event: any,
+    name: string,
+    password: string,
+): Promise<boolean> => {
+    try {
+        // Creiamo il token di base auth (disponibile nativamente in Node 18+ e ambienti Edge)
+        const credentials = btoa(`${name}:${password}`);
 
-export const checkLogin = async (event: any, name: string, password: string): Promise<boolean> => {
-  try {
-    const config = useRuntimeConfig();
-    const credentials = btoa(`${name}:${password}`);
+        // Determiniamo il fetch (VPC su Cloudflare oppure globale in dev)
+        let internalFetch = globalThis.fetch;
+        const env = event?.runtime?.cloudflare?.env;
 
-    let internalFetch = globalThis.fetch;
-    const env = event?.runtime?.cloudflare?.env;
+        logger.info(
+            `[DEBUG] auth/login.post.ts - env?.VPC_SERVICE defined? ${!!env?.VPC_SERVICE}`,
+        );
+        if (env?.VPC_SERVICE) {
+            internalFetch = env.VPC_SERVICE.fetch.bind(env.VPC_SERVICE);
+        }
 
-    if (env?.VPC_SERVICE) {
-      internalFetch = env.VPC_SERVICE.fetch.bind(env.VPC_SERVICE);
+        // Chiamiamo l'endpoint _session di CouchDB
+        const config = useRuntimeConfig();
+        logger.info(
+            `[DEBUG] auth/login.post.ts - executing fetch on: ${config.couchUrl}/_session`,
+        );
+        const response = await internalFetch(`${config.couchUrl}/_session`, {
+            method: 'GET', // CouchDB supporta GET o POST su _session
+            headers: {
+                Accept: 'application/json',
+                Authorization: `Basic ${credentials}`,
+            },
+        });
+
+        // Se la risposta è 200 OK, le credenziali sono valide.
+        // Se è 401 Unauthorized, non lo sono.
+        if (response.ok) return true;
+        logger.warn(
+            'Cannot login, invalid credentials or couchdb unreachable ' +
+                (await response.text()),
+        );
+        return false;
+    } catch (e: any) {
+        logger.warn(
+            'Cannot login, invalid credentials or couchdb unreachable ' +
+                e.message,
+        );
+        return false;
+    }
+};
+
+/**
+ * Recupera un utente dal database _users?
+ * @param name The username
+ * @returns The user if found, undefined if not found
+ */
+export const getUser = async (
+    name: string,
+    event: H3Event,
+): Promise<User | undefined> => {
+    // Usiamo encodeURIComponent per sicurezza, nel caso il nome contenga caratteri speciali
+    const docId = encodeURIComponent(`org.couchdb.user:${name}`);
+
+    // Richiamiamo direttamente il path del db e l'id del documento
+    const couch = useCouchAdmin(name, event);
+    const user = await couch.request<User>(`/_users/${docId}`);
+
+    return user;
+};
+
+/**
+ * Recupera un utente o lancia un'eccezione
+ * @param name The username
+ * @returns The user if found
+ * @throws HTTPError se l'utente non viene trovato
+ */
+export const getUserOrThrow = async (
+    name: string,
+    event: H3Event,
+): Promise<User> => {
+    const user = await getUser(name, event);
+    if (!user) {
+        throw new HTTPError('User not found', { status: 401 });
     }
 
-    const response = await internalFetch(`${config.couchUrl}/_session`, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Basic ${credentials}`,
-      },
-    });
-
-    if (response.ok) return true;
-    console.warn('Cannot login, invalid credentials or couchdb unreachable');
-    return false;
-  } catch (e: any) {
-    console.warn('Cannot login, error: ' + e.message);
-    return false;
-  }
-};
-
-export const getUser = async (name: string, event: H3Event): Promise<User | undefined> => {
-  const docId = encodeURIComponent(`org.couchdb.user:${name}`);
-  const couch = useCouchAdmin(name, event);
-  
-  try {
-    const user = await couch.request<User>(`/_users/${docId}`);
     return user;
-  } catch (e) {
-    return undefined;
-  }
-};
-
-export const getUserOrThrow = async (name: string, event: H3Event): Promise<User> => {
-  const user = await getUser(name, event);
-  if (!user) {
-    throw new HTTPError('User not found', { status: 401 });
-  }
-  return user;
 };

@@ -20,10 +20,15 @@ let changesHandler: any = null;
 async function loadHistory() {
     if (!filesDB.value) return;
     try {
-        const doc: any = await filesDB.value.get('$history');
-        history.value = (doc.versions || []).filter((v: any) =>
-            v.id.startsWith('version:'),
-        );
+        const res = await filesDB.value.allDocs({ 
+            include_docs: true, 
+            startkey: 'version:', 
+            endkey: 'version:\uffff' 
+        });
+        
+        history.value = res.rows
+            .map((r: any) => r.doc)
+            .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     } catch (e) {
         history.value = [];
     }
@@ -35,7 +40,7 @@ function selectVersion(ver: any, idx: number) {
         return;
     }
     filesDB.value
-        ?.get(ver.id)
+        ?.get(ver._id)
         .then((snapshot: any) => {
             emit('preview', snapshot);
         })
@@ -61,9 +66,13 @@ function listenToChanges() {
             .changes({
                 since: 'now',
                 live: true,
-                doc_ids: ['$history'],
+                include_docs: true,
             })
-            .on('change', () => loadHistory());
+            .on('change', (change: any) => {
+                if (change.id.startsWith('version:')) {
+                    loadHistory();
+                }
+            });
     }
 }
 
@@ -124,10 +133,10 @@ watch(filesDB, () => {
 
             <div
                 v-for="(ver, idx) in history"
-                :key="ver.id"
+                :key="ver._id"
                 class="group p-3 rounded-xl border transition-all cursor-pointer relative overflow-hidden"
                 :class="
-                    props.activeVersionId === ver.id ||
+                    props.activeVersionId === ver._id ||
                     (idx === 0 && !props.activeVersionId)
                         ? 'border-primary bg-primary/10 ring-1 ring-primary/30 shadow-lg'
                         : 'border-base-300 bg-base-200/30 hover:bg-base-100 hover:border-primary/30'
@@ -168,7 +177,7 @@ watch(filesDB, () => {
 
                 <div
                     v-if="
-                        props.activeVersionId === ver.id ||
+                        props.activeVersionId === ver._id ||
                         (idx === 0 && !props.activeVersionId)
                     "
                     class="flex gap-2 animate-in slide-in-from-bottom-2 duration-300"

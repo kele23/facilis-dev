@@ -4,6 +4,7 @@ import { useCouchAdmin } from '../utils/couch.ts';
 import { decryptToken } from '../utils/crypto.ts';
 import { getAIProvider } from '../utils/ai.ts';
 import { useStorage } from 'nitro/storage';
+import { logger } from '../utils/logger.ts';
 
 export default defineEventHandler(async (event) => {
     const user = await verifyJWT(event);
@@ -63,19 +64,13 @@ export default defineEventHandler(async (event) => {
     const aiProvider = getAIProvider(provider);
 
     // Resolve system prompt
-    let systemPrompt = projectDoc.systemPrompt;
-    if (!systemPrompt) {
-        try {
-            const storage = useStorage('assets:server');
-            const asset = await storage.getItem('prompts/default_system.md');
-            systemPrompt = asset?.toString() || '';
-        } catch (e) {
-            console.error('Failed to load default system prompt asset', e);
-            // Last resort fallback
-            systemPrompt =
-                'You are facilis.dev AI, an expert web developer specializing in rapid prototyping. Goal: Help build an application.';
-        }
+    const storage = useStorage('assets:server');
+    const asset = await storage.getItem('default_system.md');
+    if (!asset) {
+        throw new HTTPError('System prompt not found', { status: 500 });
     }
+
+    const systemPrompt = asset.toString();
 
     // Prepare project context if files are provided
     let projectContext = '';

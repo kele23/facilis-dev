@@ -47,7 +47,7 @@ importers:
         specifier: ^17.0.5
         version: 17.0.5
       nitro:
-        specifier: ^3.0.260311-beta
+        specifier: 3.0.260311-beta
         version: 3.0.260311-beta(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(jiti@2.6.1)(vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.1)(@types/node@20.19.37)(jiti@2.6.1))
       pinia:
         specifier: ^2.1.7

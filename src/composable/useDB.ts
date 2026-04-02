@@ -1,5 +1,5 @@
 import PouchDB from 'pouchdb-browser';
-import { ref, shallowRef, watch } from 'vue';
+import { ref, shallowRef } from 'vue';
 import { useAuthStore } from '../stores/auth.ts';
 import { apiLogout, doRefreshToken } from '../utils/apiFetch.ts';
 
@@ -7,115 +7,85 @@ const authStore = useAuthStore();
 const currentProject = ref<string | null>(null);
 
 const db = shallowRef<PouchDB.Database>();
-const remoteDB = shallowRef<PouchDB.Database>();
-let syncHandler: PouchDB.Replication.Sync<{}> | null = null;
-
 const filesDB = shallowRef<PouchDB.Database>();
-const remoteFilesDB = shallowRef<PouchDB.Database>();
-let filesSyncHandler: PouchDB.Replication.Sync<{}> | null = null;
 
-const chatReady = ref(false);
-const filesReady = ref(false);
 const isOnline = ref(navigator.onLine);
 window.addEventListener('online', () => (isOnline.value = true));
 window.addEventListener('offline', () => (isOnline.value = false));
 
-watch(
-    [() => authStore.isAuthenticated(), currentProject, db, filesDB, isOnline],
-    ([isLogged, project, localDb, localFilesDb, online]) => {
-        // Chat sync cleanup
-        if (syncHandler) {
-            syncHandler.cancel();
-            syncHandler = null;
-        }
-        if (remoteDB.value) {
-            remoteDB.value.close();
-            remoteDB.value = undefined;
-        }
+const syncState = ref({
+    isSyncing: false,
+    isBackgroundSyncing: false,
+    lastSync: null as Date | null,
+    error: null as string | null
+});
 
-        // Files sync cleanup
-        if (filesSyncHandler) {
-            filesSyncHandler.cancel();
-            filesSyncHandler = null;
-        }
-        if (remoteFilesDB.value) {
-            remoteFilesDB.value.close();
-            remoteFilesDB.value = undefined;
-        }
+const performSync = async (options?: { background?: boolean }) => {
+    if (!db.value || !filesDB.value || !currentProject.value || !authStore.isAuthenticated() || !isOnline.value) {
+        return;
+    }
 
-        // Reset ready flags on cleanup
-        chatReady.value = false;
-        filesReady.value = false;
-
-        // If offline, we proceed with local data immediately
-        if (!online) {
-            chatReady.value = true;
-            filesReady.value = true;
-            return;
+    try {
+        if (options?.background) {
+            syncState.value.isBackgroundSyncing = true;
+        } else {
+            syncState.value.isSyncing = true;
         }
+        syncState.value.error = null;
 
-        if (isLogged && online && project) {
-            const fetchOpts = {
-                fetch: async (url: any, opts: any) => {
-                    const response = await (PouchDB as any).fetch(url, opts);
-                    if (response.status == 401) {
-                        const refreshed = await doRefreshToken();
-                        if (refreshed) {
-                            return await (PouchDB as any).fetch(url, opts);
-                        } else {
-                            apiLogout();
-                        }
+        const fetchOpts = {
+            fetch: async (url: any, opts: any) => {
+                const response = await (PouchDB as any).fetch(url, opts);
+                if (response.status == 401) {
+                    const refreshed = await doRefreshToken();
+                    if (refreshed) {
+                        return await (PouchDB as any).fetch(url, opts);
+                    } else {
+                        apiLogout();
                     }
-                    return response;
-                },
-            };
+                }
+                return response;
+            },
+        };
 
-            if (localDb) {
-                remoteDB.value = new PouchDB(
-                    `${window.location.origin}/couch/facilis-chat-${project}`,
-                    fetchOpts,
-                );
-                syncHandler = localDb
-                    .sync(remoteDB.value, {
-                        live: true,
-                        retry: true,
-                    })
-                    .on('paused', () => {
-                        console.log('[DB] Chat sync caught up.');
-                        chatReady.value = true;
-                    })
-                    .on('error', (err: any) => {
-                        console.warn('[DB] Chat sync error (probably 404 on new project):', err);
-                    })
-                    .on('denied', (err: any) => {
-                        console.error('[DB] Chat sync denied:', err);
-                    });
-            }
+        const remoteChatDB = new PouchDB(
+            `${window.location.origin}/couch/facilis-chat-${currentProject.value}`,
+            fetchOpts,
+        );
+        const remoteFilesDB = new PouchDB(
+            `${window.location.origin}/couch/facilis-files-${currentProject.value}`,
+            fetchOpts,
+        );
 
-            if (localFilesDb) {
-                remoteFilesDB.value = new PouchDB(
-                    `${window.location.origin}/couch/facilis-files-${project}`,
-                    fetchOpts,
-                );
-                filesSyncHandler = localFilesDb
-                    .sync(remoteFilesDB.value, {
-                        live: true,
-                        retry: true,
-                    })
-                    .on('paused', () => {
-                        console.log('[DB] Files sync caught up.');
-                        filesReady.value = true;
-                    })
-                    .on('error', (err: any) => {
-                        console.warn('[DB] Files sync error (probably 404 on new project):', err);
-                    })
-                    .on('denied', (err: any) => {
-                        console.error('[DB] Files sync denied:', err);
-                    });
-            }
+        // Sync Chat
+        try {
+            await db.value.sync(remoteChatDB, {
+                live: false,
+                retry: false,
+            });
+        } catch (e: any) {
+            console.warn('[DB] Chat sync warning (potentially 404 on new project):', e.message);
         }
-    },
-);
+
+        // Sync Files
+        try {
+            await filesDB.value.sync(remoteFilesDB, {
+                live: false,
+                retry: false,
+            });
+        } catch (e: any) {
+            console.warn('[DB] Files sync warning (potentially 404 on new project):', e.message);
+        }
+        
+        syncState.value.lastSync = new Date();
+    } catch (err: any) {
+        console.error('[DB] Sync error:', err);
+        syncState.value.error = err.message || 'Error record processing sync';
+    } finally {
+        syncState.value.isSyncing = false;
+        syncState.value.isBackgroundSyncing = false;
+    }
+};
 
 export function useDB() {
     const setCurrentProject = async (projectId: string) => {
@@ -135,7 +105,7 @@ export function useDB() {
         filesDB,
         currentProject,
         setCurrentProject,
-        chatReady,
-        filesReady,
+        performSync,
+        syncState
     };
 }

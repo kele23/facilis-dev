@@ -1,45 +1,45 @@
 {
-  "name": "facilis-dev",
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@guolao/vue-monaco-editor": "^1.6.0",
-    "@heroicons/vue": "^2.2.0",
-    "@types/file-saver": "^2.0.7",
-    "@types/marked": "^6.0.0",
-    "@vueuse/core": "^10.9.0",
-    "consola": "^3.4.2",
-    "events": "^3.3.0",
-    "file-saver": "^2.0.5",
-    "jose": "^5.2.3",
-    "jszip": "^3.10.1",
-    "marked": "^17.0.5",
-    "nitro": "^3.0.260311-beta",
-    "pinia": "^2.1.7",
-    "pouchdb-browser": "^9.0.0",
-    "vue": "^3.4.21",
-    "vue-i18n": "^11.3.0",
-    "vue-router": "^4.3.0"
-  },
-  "devDependencies": {
-    "@tailwindcss/vite": "^4.0.0-beta.8",
-    "@types/node": "^20.11.24",
-    "@types/pouchdb-browser": "^6.1.5",
-    "@vitejs/plugin-vue": "^6.0.5",
-    "daisyui": "^5.0.0-beta.8",
-    "tailwindcss": "^4.0.0-beta.8",
-    "typescript": "^5.9.3",
-    "vite": "^8.0.1",
-    "vue-tsc": "^2.2.0"
-  },
-  "pnpm": {
-    "patchedDependencies": {
-      "pouchdb-browser@9.0.0": "patches/pouchdb-browser.patch"
+    "name": "facilis-dev",
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@guolao/vue-monaco-editor": "^1.6.0",
+        "@heroicons/vue": "^2.2.0",
+        "@types/file-saver": "^2.0.7",
+        "@types/marked": "^6.0.0",
+        "@vueuse/core": "^10.9.0",
+        "consola": "^3.4.2",
+        "events": "^3.3.0",
+        "file-saver": "^2.0.5",
+        "jose": "^5.2.3",
+        "jszip": "^3.10.1",
+        "marked": "^17.0.5",
+        "nitro": "^3.0.260401-beta",
+        "pinia": "^2.1.7",
+        "pouchdb-browser": "^9.0.0",
+        "vue": "^3.4.21",
+        "vue-i18n": "^11.3.0",
+        "vue-router": "^4.3.0"
+    },
+    "devDependencies": {
+        "@tailwindcss/vite": "^4.0.0-beta.8",
+        "@types/node": "^20.11.24",
+        "@types/pouchdb-browser": "^6.1.5",
+        "@vitejs/plugin-vue": "^6.0.5",
+        "daisyui": "^5.0.0-beta.8",
+        "tailwindcss": "^4.0.0-beta.8",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.1",
+        "vue-tsc": "^2.2.0"
+    },
+    "pnpm": {
+        "patchedDependencies": {
+            "pouchdb-browser@9.0.0": "patches/pouchdb-browser.patch"
+        }
     }
-  }
 }

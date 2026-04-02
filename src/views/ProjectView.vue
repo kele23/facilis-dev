@@ -61,6 +61,20 @@
                         </div>
                         <button
                             class="btn btn-ghost btn-circle btn-sm"
+                            @click="handleManualSync"
+                            :disabled="syncState.isSyncing || syncState.isBackgroundSyncing"
+                            :title="t('studio.sync')"
+                        >
+                            <svg v-if="syncState.isSyncing || syncState.isBackgroundSyncing" class="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"></circle>
+                                <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor" class="opacity-75"></path>
+                            </svg>
+                            <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                        </button>
+                        <button
+                            class="btn btn-ghost btn-circle btn-sm"
                             @click="showSettingsModal = true"
                         >
                             <svg
@@ -254,7 +268,7 @@
     <!-- Initial Sync Loader Overlay -->
     <Transition name="fade">
         <div
-            v-if="isSyncing"
+            v-if="showOverlayLoader"
             class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-base-100"
         >
             <div class="relative flex flex-col items-center gap-8">
@@ -359,19 +373,13 @@ const messages = ref<ChatMessage[]>([]);
 const threads = ref<ChatThread[]>([]);
 const activeThreadId = ref<string | null>(null);
 
-const { db, filesDB, setCurrentProject, chatReady, filesReady } = useDB();
-const syncTimeoutReached = ref(false);
+const { db, filesDB, setCurrentProject, performSync, syncState } = useDB();
 const isInitialized = ref(false);
-
-const isSyncing = computed(() => {
-    return !isInitialized.value;
-});
 let changesHandler: any = null;
 
-const syncCheckData = ref<{
-    chat?: { hasChanges: boolean; newSeq: string; latestDocId: string | null; latestDocDeleted?: boolean };
-    files?: { hasChanges: boolean; newSeq: string; latestDocId: string | null; latestDocDeleted?: boolean };
-} | null>(null);
+const showOverlayLoader = computed(() => {
+    return !isInitialized.value || syncState.value.isSyncing;
+});
 
 const activeThread = computed(() =>
     threads.value.find((t) => t._id === activeThreadId.value),
@@ -385,80 +393,10 @@ async function loadData() {
 
     if (!db.value) return;
 
-    // 1. Check for server-side changes before proceeding
-    try {
-        const lastChatSeq =
-            localStorage.getItem(`facilis-sync-chat-${projectId}`) || '0';
-        const lastFilesSeq =
-            localStorage.getItem(`facilis-sync-files-${projectId}`) || '0';
-
-        const resp = await apiFetch(
-            `/api/projects/${projectId}/sync-check?chatSeq=${lastChatSeq}&filesSeq=${lastFilesSeq}`,
-        );
-        if (resp.ok) {
-            syncCheckData.value = await resp.json();
-        }
-
-        console.log('[SYNC] Check result:', syncCheckData.value);
-    } catch (e) {
-        console.error(
-            '[SYNC] Check failed, falling back to traditional wait:',
-            e,
-        );
-    }
-
-    // 2. Wait for the sync catch-up (using a polling loop on the specific doc IDs)
-    const chatDocToWaitFor = syncCheckData.value?.chat?.hasChanges ? syncCheckData.value?.chat?.latestDocId : null;
-    const filesDocToWaitFor = syncCheckData.value?.files?.hasChanges ? syncCheckData.value?.files?.latestDocId : null;
-
-    if (chatDocToWaitFor || filesDocToWaitFor) {
-        console.log(`[SYNC] Waiting for documents. Chat: ${chatDocToWaitFor || 'up-to-date'}, Files: ${filesDocToWaitFor || 'up-to-date'}`);
-        const start = Date.now();
-        
-        while (!syncTimeoutReached.value && Date.now() - start < 10000) {
-            let chatReadyStatus = !chatDocToWaitFor;
-            let filesReadyStatus = !filesDocToWaitFor;
-
-            if (chatDocToWaitFor && db.value) {
-                try {
-                    const res = await db.value.allDocs({ keys: [chatDocToWaitFor] });
-                    const row: any = res.rows[0];
-                    if (!row.error || row.error !== 'not_found' || row.value?.deleted) {
-                        chatReadyStatus = true; // Found it, or it's definitively deleted locally
-                    }
-                } catch (e: any) {
-                    // unexpected error fetching allDocs
-                }
-            }
-
-            if (filesDocToWaitFor && filesDB.value) {
-                try {
-                    const res = await filesDB.value.allDocs({ keys: [filesDocToWaitFor] });
-                    const row: any = res.rows[0];
-                    if (!row.error || row.error !== 'not_found' || row.value?.deleted) {
-                        filesReadyStatus = true; // Found it, or it's definitively deleted locally
-                    }
-                } catch (e: any) {
-                    // unexpected error fetching allDocs
-                }
-            }
-
-            if (chatReadyStatus && filesReadyStatus) {
-                console.log('[SYNC] Synced target documents! Booting UI.');
-                break;
-            }
-
-            // Also fallback check if pouchdb triggers ready just in case of weird docs
-            if (chatReady.value && filesReady.value && Date.now() - start > 2000) {
-                 console.log('[SYNC] Forced boot via pouch pause (fallback).');
-                 break;
-            }
-
-            await new Promise((r) => setTimeout(r, 200));
-        }
-    } else {
-        console.log('[SYNC] Server reported no changes. Booting UI immediately.');
-    }
+    // 1. Perform a one-off full sync before loading UI data
+    console.log('[SYNC] Starting initial project sync...');
+    await performSync();
+    console.log('[SYNC] Sync finished.');
 
     try {
         // 3. Load all documents (threads & messages) from local DB
@@ -491,28 +429,56 @@ async function loadData() {
         appReady.value = true;
 
         // Final verification for project emptiness
-        if (chatReady.value && threads.value.length === 0) {
+        if (threads.value.length === 0) {
             console.log(
                 '[CHAT] Sync confirmed empty project. Creating default...',
             );
             await createNewThread('Default Conversation');
         }
 
-        // 4. Update sync markers in localStorage
-        if (syncCheckData.value?.chat?.newSeq) {
-            localStorage.setItem(
-                `facilis-sync-chat-${projectId}`,
-                syncCheckData.value.chat.newSeq,
-            );
-        }
-        if (syncCheckData.value?.files?.newSeq) {
-            localStorage.setItem(
-                `facilis-sync-files-${projectId}`,
-                syncCheckData.value.files.newSeq,
-            );
-        }
-
         isInitialized.value = true;
+
+        // Gestione cambiamenti real-time (Local database reactivity)
+        changesHandler = db.value.changes({
+            since: 'now',
+            live: true,
+            include_docs: true,
+        }).on('change', (change: any) => {
+            if (change.deleted) {
+                messages.value = messages.value.filter((m) => m._id !== change.id);
+                threads.value = threads.value.filter((t) => t._id !== change.id);
+                if (activeThreadId.value === change.id) {
+                    activeThreadId.value = threads.value[0]?._id || null;
+                }
+                return;
+            }
+
+            const doc = change.doc;
+            if (doc.type === 'thread') {
+                const idx = threads.value.findIndex((t) => t._id === doc._id);
+                if (idx > -1) threads.value[idx] = doc;
+                else {
+                    threads.value.unshift(doc);
+                    if (!activeThreadId.value) activeThreadId.value = threads.value[0]._id;
+                }
+                threads.value.sort(
+                    (a: any, b: any) =>
+                        new Date(b.updatedAt).getTime() -
+                        new Date(a.updatedAt).getTime(),
+                );
+            } else if (doc.role) {
+                const idx = messages.value.findIndex((m) => m._id === doc._id);
+                if (idx > -1) messages.value[idx] = doc;
+                else messages.value.push(doc);
+                messages.value.sort(
+                    (a: any, b: any) =>
+                        new Date(a.timestamp).getTime() -
+                        new Date(b.timestamp).getTime(),
+                );
+                if (doc.threadId === activeThreadId.value) scrollToBottom();
+            }
+        });
+
     } catch (e: any) {
         console.error('Error loading chat data', e);
         appReady.value = true;
@@ -541,6 +507,15 @@ async function handleSelectThread(id: string) {
     showHistoryModal.value = false;
 }
 
+async function handleManualSync() {
+    console.log('[SYNC] Manual sync triggered from UI');
+    await performSync();
+    if (syncState.value.error) {
+        console.error('[SYNC] Sync failed:', syncState.value.error);
+        alert(t('studio.syncError') + ': ' + syncState.value.error);
+    }
+}
+
 async function handleNewThread() {
     await createNewThread();
     showHistoryModal.value = false;
@@ -556,10 +531,22 @@ async function saveVersion(title: string) {
     try {
         const res = await filesDB.value.allDocs({ include_docs: true });
         const files: Record<string, string> = {};
+        
+        let parentId = null;
+        let latestTimestamp = 0;
+
         res.rows.forEach((r: any) => {
-            // Include only actual app files
+            // Include actual app files
             if (r.doc.type === 'file' && r.doc.content) {
                 files[r.doc._id] = r.doc.content;
+            }
+            // Find parent version (HEAD)
+            if (r.doc._id.startsWith('version:')) {
+                const ts = new Date(r.doc.timestamp).getTime();
+                if (ts > latestTimestamp) {
+                    latestTimestamp = ts;
+                    parentId = r.doc._id;
+                }
             }
         });
 
@@ -571,38 +558,16 @@ async function saveVersion(title: string) {
             _id: versionId,
             type: 'snapshot',
             files,
-            timestamp: new Date().toISOString(),
+            timestamp: new Date(timestamp).toISOString(),
             title,
+            parentId
         };
         await filesDB.value.put(versionDoc as any);
 
-        // Update $history index
-        let historyDoc: any = { _id: '$history', versions: [] };
-        try {
-            const existing = await filesDB.value.get('$history');
-            historyDoc = { ...existing };
-        } catch (e) {}
-
-        if (!historyDoc.versions) historyDoc.versions = [];
-        historyDoc.versions.unshift({
-            id: versionId,
-            timestamp: versionDoc.timestamp,
-            title,
-        });
-
-        // Rotation logic: keep only 20
-        if (historyDoc.versions.length > 20) {
-            const extra = historyDoc.versions.splice(20);
-            for (const v of extra) {
-                try {
-                    const docToDelete = await filesDB.value.get(v.id);
-                    await filesDB.value.remove(docToDelete);
-                } catch (e) {}
-            }
-        }
-
-        await filesDB.value.put(historyDoc);
-        console.log(`[HISTORY] Saved version: ${versionId}`);
+        console.log(`[HISTORY] Saved version: ${versionId} (Parent: ${parentId || 'none'})`);
+        
+        // Auto-sync after commit (background)
+        await performSync({ background: true });
     } catch (e) {
         console.error('[HISTORY] Error saving version', e);
     }
@@ -836,10 +801,6 @@ const renderMarkdown = (content: string) => {
 
 onMounted(() => {
     loadData();
-    // Safety timeout: 10 seconds if sync hangs
-    setTimeout(() => {
-        syncTimeoutReached.value = true;
-    }, 10000);
 });
 
 onUnmounted(() => {

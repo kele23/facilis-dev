@@ -245,15 +245,7 @@ async function restoreCurrentPreview() {
             await filesDB.value.bulkDocs(futureVersions);
         }
 
-        // 3. Update $history
-        try {
-            const historyDoc: any = await filesDB.value.get('$history');
-            historyDoc.versions = historyDoc.versions.filter((v: any) => {
-                const vTime = new Date(v.timestamp).getTime();
-                return vTime <= snapshotTime;
-            });
-            await filesDB.value.put(historyDoc);
-        } catch (e) {}
+        // 3. (Removed $history update)
 
         // 4. Restore Files (Batch optimized)
         const fileEntries = Object.entries(snapshot.files);

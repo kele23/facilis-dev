@@ -22,7 +22,7 @@ export default defineEventHandler(async (event: H3Event) => {
                 return isDev || isUsr;
             })
             .map((p: any) => ({
-                id: p.name || p._id,
+                id: p._id,
                 name: p.name || p._id,
                 role:
                     p.developers && p.developers.includes(user.name)
